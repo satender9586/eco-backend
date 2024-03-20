@@ -12,16 +12,6 @@ const razorpayInstance = new Razorpay({
   key_secret: process.env.RAZORPAY_SECRET,
 });
 
-// Define a function to save payment data
-async function savePaymentData(razorpayOrderId) {
-  try {
-    const data = new PaymentModel({ key_id: razorpayOrderId });
-    return await data.save();
-  } catch (error) {
-    throw new Error(`Failed to save payment data: ${error.message}`);
-  }
-}
-
 router.post("/makePayment", async (req, res) => {
   try {
     const { amount } = req.body;
@@ -49,7 +39,7 @@ router.post("/makePayment", async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Payment created successfully",
-      key_id: process.env.RAZORPAY_KEY,
+      RazorPaykey_id: process.env.RAZORPAY_KEY,
       data: savedPayment,
     });
   } catch (error) {
@@ -86,34 +76,42 @@ router.post("/confirmPayment", async (req, res) => {
       key_id: orderCreationId,
     });
 
-    console.log(isPaymetnOrderIdExist);
+    if (!isPaymetnOrderIdExist) {
+      return res.status(404).json({
+        success: true,
+        message: "Payment init id does not exist",
+      });
+    }
 
-    // const paymentObj = new PaymentModel({
-    //   orderCreationId,
-    //   razorpayPaymentId,
-    //   razorpayOrderId,
-    //   razorpaySignature,
-    // });
+    isPaymetnOrderIdExist.PaymentSuccessSummary.orderCreationId =
+      orderCreationId;
+    isPaymetnOrderIdExist.PaymentSuccessSummary.razorpayPaymentId =
+      razorpayPaymentId;
+    isPaymetnOrderIdExist.PaymentSuccessSummary.razorpayOrderId =
+      razorpayOrderId;
+    isPaymetnOrderIdExist.PaymentSuccessSummary.razorpaySignature =
+      razorpaySignature;
 
-    // await paymentObj.save();
+    const saveObj = await isPaymetnOrderIdExist.save();
 
     return res.status(200).json({
       success: true,
-      message: "Payment confirmed successfully",
-      payment: paymentObj,
+      message: "Payment confirm successfully",
+      payment: saveObj,
+      RazorPayKey_id: razorpayOrderId,
     });
   } catch (error) {
     console.log("Error from payment confirm api", error);
     return res.status(500).json({
       success: false,
-      message: "An error occurred while confirming payment",
+      message: "An error occurred while confirm payment",
       error: error.message,
     });
   }
 });
 
 router.post("/createOrder", async (req, res) => {
-  const { userId, paymentId, amount, products } = req.body;
+  const { userId, paymentId, amount, products, shippinAddress } = req.body;
 
   try {
     // Check if amount is missing
@@ -125,14 +123,15 @@ router.post("/createOrder", async (req, res) => {
     }
 
     // Save order data
-    // const order = new Order({
-    //   // userId,
-    //   // paymentId,
-    //   amount,
-    //   // products
-    // });
+    const order = new Order({
+      userId,
+      paymentId,
+      amount,
+      products,
+      shippinAddress,
+    });
 
-    const savedOrder = await Order.create({ amount });
+    const savedOrder = await Order.create(order);
 
     if (!savedOrder) {
       return res.status(400).json({

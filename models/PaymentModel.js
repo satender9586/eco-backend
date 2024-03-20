@@ -8,13 +8,19 @@ const PaymentSchema = new Schema(
       type: String,
       required: true,
     },
-    amount:{
-      type:Number,
-      required:true
+    amount: {
+      type: Number,
+      required: true,
     },
     Summary: {
       type: Object,
-      required:true
+      required: true,
+    },
+    PaymentSuccessSummary: {
+      orderCreationId: { type: String },
+      razorpayPaymentId: { type: String },
+      razorpayOrderId: { type: String },
+      razorpaySignature: { type: String },
     },
   },
   { timestamps: true }
