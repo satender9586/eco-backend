@@ -7,7 +7,7 @@ import authroutes from "./routes/authroutes.js";
 import productrouts from "./routes/productRoutes.js";
 import shippingroute from "./routes/shippingroute.js";
 import orderRoutes from "./routes/orderRoutes.js";
-import paymentRouter from "../Backend/routes/PaymentRouter.js";
+import paymentRouter from "./routes/PaymentRouter.js";
 
 dotenv.config();
 connectDB();

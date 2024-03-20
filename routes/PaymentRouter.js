@@ -39,7 +39,12 @@ router.post("/makePayment", async (req, res) => {
     });
 
     // Save payment data using the separate function
-    const savedPayment = await savePaymentData(razorpayOrder.id);
+    const savedPayment = await PaymentModel.create({
+      key_id: razorpayOrder.id,
+      amount: amount,
+      Summary: razorpayOrder,
+    });
+    console.log(savedPayment);
 
     res.status(200).json({
       success: true,
