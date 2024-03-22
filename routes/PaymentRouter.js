@@ -155,4 +155,38 @@ router.post("/createOrder", async (req, res) => {
     });
   }
 });
+
+router.get("/orders/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "User Id is Required",
+      });
+    }
+
+    const retrievedOrders = await Order.find({ userId: id });
+
+    if (!retrievedOrders || retrievedOrders.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No orders found for the provided user ID",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: retrievedOrders,
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "An error occurred while processing your request",
+    });
+  }
+});
+
 export default router;
