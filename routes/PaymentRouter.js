@@ -28,7 +28,7 @@ router.post("/makePayment", async (req, res) => {
       receipt: `txt_${Date.now()}`,
     });
 
-    // Save payment data using the separate function
+   
     const savedPayment = await PaymentModel.create({
       key_id: razorpayOrder.id,
       amount: amount,
