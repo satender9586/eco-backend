@@ -34,3 +34,12 @@ const connectDB = async () => {
 };
 
 export default connectDB;
+
+// Additional error handling for network-related errors
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled Rejection at:", promise, "reason:", reason);
+  if (reason.message.includes("getaddrinfo")) {
+    console.log("Network error occurred. Retrying connection...");
+    connectDB(); // Retry connection
+  }
+});
