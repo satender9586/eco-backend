@@ -3,6 +3,7 @@ import Razorpay from "razorpay";
 import dotenv from "dotenv";
 import PaymentModel from "../models/PaymentModel.js";
 import Order from "../models/OrderModal.js";
+import Product from "../models/productModel.js";
 
 dotenv.config();
 const router = express.Router();
@@ -28,7 +29,6 @@ router.post("/makePayment", async (req, res) => {
       receipt: `txt_${Date.now()}`,
     });
 
-   
     const savedPayment = await PaymentModel.create({
       key_id: razorpayOrder.id,
       amount: amount,
@@ -109,12 +109,10 @@ router.post("/confirmPayment", async (req, res) => {
     });
   }
 });
-
 router.post("/createOrder", async (req, res) => {
-  const { userId, paymentId, amount, products, shippinAddress } = req.body;
+  const { userId, paymentId, amount, products, shippingAddress } = req.body;
 
   try {
-    // Check if amount is missing
     if (!amount) {
       return res.status(400).json({
         success: false,
@@ -122,16 +120,24 @@ router.post("/createOrder", async (req, res) => {
       });
     }
 
-    // Save order data
+    const productObjects = await Product.find({
+      _id: { $in: products.map((p) => p._id) },
+    });
+
+    const orderProducts = products.map(({ _id, quantity }) => {
+      const product = productObjects.find((p) => p._id.toString() === _id);
+      return { product, quantity };
+    });
+
     const order = new Order({
       userId,
       paymentId,
       amount,
-      products,
-      shippinAddress,
+      products: orderProducts,
+      shippingAddress,
     });
 
-    const savedOrder = await Order.create(order);
+    const savedOrder = await order.save();
 
     if (!savedOrder) {
       return res.status(400).json({
@@ -139,8 +145,6 @@ router.post("/createOrder", async (req, res) => {
         message: "Failed to create order",
       });
     }
-
-    console.log("savde order", savedOrder);
 
     return res.status(201).json({
       success: true,
@@ -167,7 +171,7 @@ router.get("/orders/:id", async (req, res) => {
       });
     }
 
-    const retrievedOrders = await Order.find({ userId: id });
+    const retrievedOrders = await Order.find({ _id: id });
 
     if (!retrievedOrders || retrievedOrders.length === 0) {
       return res.status(404).json({
@@ -185,6 +189,26 @@ router.get("/orders/:id", async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "An error occurred while processing your request",
+    });
+  }
+});
+
+router.get("/ordersuser/:userId", async (req, res) => {
+  const userId = req.params.userId;
+
+  try {
+    const orders = await Order.find({ userId });
+
+    return res.status(200).json({
+      success: true,
+      message: "Orders retrieved successfully",
+      orders,
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: `An error occurred: ${error}`,
     });
   }
 });
